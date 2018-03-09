@@ -1,0 +1,99 @@
+
+model {
+    
+    # b0 parameters are intercepts; bz parameters are size slopes
+    # bq parameters are slopes for the model wide latent year effect (Q)
+    # t parameters are additional submodel specific random year effects
+    
+    ####### Survival model #######
+    for (i in 1:Nsurv){ 
+        surv[i]~dbern(musu[i])
+        logit(musu[i]) <- b0su + bzsu * zsu[i] + bqsu * Q[tsu[i]] + ts[tsu[i]]
+    }
+    
+    # Priors for survival model
+    b0su ~ dnorm(0, tau.b0)
+    bzsu ~ dnorm(0, tau.bz)
+    bqsu ~ dunif(0, 10)
+    
+    # Priors for the additional year effects
+    for (t in 1:Yrs){
+      ts[t] ~dnorm(0.0, tau.ts)
+    }
+    tau.ts <- pow(sigma.ts, -2)
+    sigma.ts ~ dunif(0,10)
+    
+    ####### Growth model #######
+    for (i in 1:Ngrow){
+        grow[i] ~ dnorm(mugr[i], tau.gr)
+        mugr[i] <- b0gr + bzgr * zgr[i] + bqgr * Q[tgr[i]] + tg[tgr[i]]
+    }
+    
+    # Priors for growth model
+    b0gr ~ dnorm(0, tau.b0)
+    bzgr ~ dnorm(0, tau.bz)
+    bqgr ~ dnorm(0, tau.bq)
+    sigma.gr ~ dunif(0, 10)
+    tau.gr <- pow(sigma.gr, -2)
+    
+    for (t in 1:Yrs){
+        tg[t] ~dnorm(0.0, tau.tg)
+    }
+    tau.tg <- pow(sigma.tg, -2)
+    sigma.tg ~ dunif(0,10)
+    
+    ####### Reproduction model #######
+    for (i in 1:Ngrow){
+        rep[i]~dbern(murep[i])
+        logit(murep[i]) <- b0rep + bzrep * zgr[i] + bqrep * Q[tgr[i]] + trp[tgr[i]]
+    }
+    
+    # Priors for reproduction model
+    b0rep ~ dnorm(0, tau.b0)
+    bzrep ~ dnorm(0, tau.bz)
+    bqrep ~ dnorm(0, tau.bq)
+    
+    # Priors for the additional year effects
+    for (t in 1:Yrs){
+      trp[t] ~dnorm(0.0, tau.trp)
+    }
+    tau.trp <- pow(sigma.trp, -2)
+    sigma.trp ~ dunif(0,10)
+    
+    ###### Recruit size model ######
+    for (i in 1:Nrs){
+        rs[i] ~ dnorm(murs[i], tau.rs)
+        murs[i] <- b0rs + bzrs * zrs[i] + bqrs * Q[trs[i]] + tr[trs[i]]
+    }
+    
+    # Priors for recruit size model
+    b0rs ~ dnorm(0, tau.b0)
+    bzrs ~ dnorm(0, tau.bz)
+    bqrs ~ dnorm(0, tau.bq)
+    sigma.rs ~ dunif(0, 10)
+    tau.rs <- pow(sigma.rs, -2)
+    
+    for (t in 1:Yrs){
+        tr[t] ~dnorm(0.0, tau.tr)
+    }
+    tau.tr <- pow(sigma.tr, -2)
+    sigma.tr ~ dunif(0,10)
+    
+    
+    ##### Model wide year prior ######
+    for (t in 1:Yrs) {
+        Q[t] ~ dnorm(0, tau.Q)
+    }
+    tau.Q <- pow(sigma.Q, -2)
+    sigma.Q <- 1 
+    ## NB: the standard deviation of the latent variable (Q) is set to 1 to make the model identifiable
+    ## Alternatively one of the slope terms for the latent variable (bq) could be set to 1.
+
+    tau.b0 <- pow(sigma.b0, -2)   # Precision for intercepts
+    tau.bz <- pow(sigma.bz, -2)   # Precision for size effects
+    tau.bq <- pow(sigma.bq, -2)
+    sigma.b0 <- 100
+    sigma.bz <- 100
+    sigma.bq <- 10
+
+}
